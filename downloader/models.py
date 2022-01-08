@@ -11,8 +11,9 @@ class Album(BaseModel):
             "title": "quidem molestiae enim"
         }
     """
+
     userId: int
-    id_: int =  Field(alias='id')
+    id_: int = Field(alias="id")
     title: str
 
 
@@ -28,8 +29,9 @@ class Photo(BaseModel):
             "thumbnailUrl": "https://via.placeholder.com/150/92c952"
         }
     """
+
     albumId: int
-    id_: int =  Field(alias='id')
+    id_: int = Field(alias="id")
     title: str
     url: HttpUrl
     thumbnailUrl: HttpUrl

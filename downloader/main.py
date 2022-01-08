@@ -98,27 +98,32 @@ class Control:
             photos_future = executor.submit(
                 self.download, self.photos_url, self.STRATEGY["photos"]
             )
+
             albums_json: Dict[int, Album] = albums_future.result()
             logger.debug("загружено albums_json")
             photos_json: List[Photo] = photos_future.result()
             logger.debug("загружено photos_json")
+
             photos_url: List[str] = [i.url for i in photos_json]
             result = executor.map(
                 self.download, photos_url, repeat(self.STRATEGY["photo_binary"])
             )
         logger.debug("загружены фотки")
+
         self.create_folder()
+
         file: bytes
         for photo, file in zip(photos_json, result):
             album = albums_json[photo.albumId]
             album_path = FOLDER / album.title
             album_path.mkdir(exist_ok=True)
+
             # folder/<album.title>/<photo.title>.png
             path = (album_path / photo.title).with_suffix(".png")
             path.write_bytes(file)
 
 
-def main(verbose=0):
+def main():
     t = Timer.start()
     logger.info("Запуск")
     downloader = Control(albums_url=ALBUM_URL, photos_url=PHOTOS_URL, folder=FOLDER)

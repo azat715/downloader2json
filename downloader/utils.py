@@ -1,9 +1,8 @@
 import functools
 import time
-from typing import Any, List, Mapping, Union, Type
+from typing import Any, List, Mapping, Type
 
 import requests
-from loguru import logger
 from pydantic import BaseModel, parse_obj_as
 
 
@@ -44,9 +43,6 @@ class Serializer:
         Args:
             data ([dict]): словарь json
             many ([bool]), default=False: работа со списком
-
-        Returns:
-            [list]: список Pydantic models
 
         Raises:
             [ValidationError]: ошибка валидации pydantic
