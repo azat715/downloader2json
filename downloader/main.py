@@ -1,4 +1,5 @@
 import concurrent.futures
+from concurrent.futures import wait
 from abc import ABC, abstractmethod
 from itertools import repeat
 from pathlib import Path
@@ -6,8 +7,8 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
-from downloader.models import Album, Photo
-from downloader.utils import Get, Serializer, Timer, logger_wraps
+from .models import Album, Photo, PhotoTask
+from .utils import Get, Serializer, Timer, logger_wraps
 
 ALBUM_URL = "https://jsonplaceholder.typicode.com/albums/"
 PHOTOS_URL = "https://jsonplaceholder.typicode.com/photos/"
@@ -90,7 +91,20 @@ class Control:
     def download(self, url: str, worker: DownloadCenter):
         return worker.download(url)
 
+    def processing_photo(self, task: PhotoTask):
+        photo: Photo = task.photo
+        album: Album = task.album
+        file: bytes = self.download(photo.url,  self.STRATEGY["photo_binary"])
+        album_path = self.folder / album.title
+        album_path.mkdir(exist_ok=True)
+
+        # folder/<album.title>/<photo.title>.png
+        path = (album_path / photo.title).with_suffix(".png")
+        path.write_bytes(file)
+
+
     def run(self):
+        self.create_folder()
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             albums_future = executor.submit(
                 self.download, self.albums_url, self.STRATEGY["albums"]
@@ -104,23 +118,16 @@ class Control:
             photos_json: List[Photo] = photos_future.result()
             logger.debug("загружено photos_json")
 
-            photos_url: List[str] = [i.url for i in photos_json]
-            result = executor.map(
-                self.download, photos_url, repeat(self.STRATEGY["photo_binary"])
-            )
+            tasks = []
+            for photo in photos_json:
+                album = albums_json[photo.albumId]
+                tasks.append(PhotoTask(photo=photo, album=album))
+
+            executor.map(self.processing_photo, tasks)
         logger.debug("загружены фотки")
 
-        self.create_folder()
+        
 
-        file: bytes
-        for photo, file in zip(photos_json, result):
-            album = albums_json[photo.albumId]
-            album_path = FOLDER / album.title
-            album_path.mkdir(exist_ok=True)
-
-            # folder/<album.title>/<photo.title>.png
-            path = (album_path / photo.title).with_suffix(".png")
-            path.write_bytes(file)
 
 
 def main():

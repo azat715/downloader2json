@@ -1,3 +1,4 @@
+from typing import NamedTuple
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -35,3 +36,8 @@ class Photo(BaseModel):
     title: str
     url: HttpUrl
     thumbnailUrl: HttpUrl
+
+
+class PhotoTask(NamedTuple):
+    photo: Photo
+    album: Album
