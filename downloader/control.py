@@ -78,8 +78,7 @@ class Control:
     async def worker(self, queue):
         while True:
             try:
-                # Wait for 1 hour
-                # Get a "work item" out of the queue.
+                raise Exception("test error")
                 task: PhotoTask = await queue.get()
                 photo: Photo = task.photo
                 album: Album = task.album
@@ -100,6 +99,12 @@ class Control:
 
             except asyncio.CancelledError:
                 break
+
+            except Exception as e:
+                raise e
+
+            finally:
+                queue.task_done()
 
     async def async_run(self):
         self.create_folder()
