@@ -3,13 +3,14 @@ import concurrent.futures
 from itertools import repeat
 from pathlib import Path
 from typing import List, Dict
+from aiofile import async_open
 
 from loguru import logger
 
 from .base import DownloadCenter
 from .async_1 import AlbumJson, PhotoJson, PhotoBinary
 from .async_2 import AsyncAlbumJson, AsyncPhotoJson, AsyncPhotoBinary
-from .models import Album, Photo
+from .models import Album, Photo, PhotoTask
 from .utils import logger_wraps
 
 
@@ -74,26 +75,64 @@ class Control:
             path = (album_path / photo.title).with_suffix(".png")
             path.write_bytes(file)
 
+    async def worker(self, queue):
+        while True:
+            try:
+                # Wait for 1 hour
+                # Get a "work item" out of the queue.
+                task: PhotoTask = await queue.get()
+                photo: Photo = task.photo
+                album: Album = task.album
+
+                file: bytes = await self.async_download(
+                    photo.url, self.STRATEGY["async_photo_binary"]
+                )
+                logger.debug(f"загружено {photo.url}")
+                album_path = self.folder / album.title
+                album_path.mkdir(exist_ok=True)
+
+                # folder/<album.title>/<photo.title>.png
+                path = (album_path / photo.title).with_suffix(".png")
+                async with async_open(path, "wb") as f:
+                    await f.write(file)
+                logger.debug(f"Сохранено {path}")
+                queue.task_done()
+
+            except asyncio.CancelledError:
+                break
+
     async def async_run(self):
+        self.create_folder()
         albums_json: Dict[int, Album] = await self.async_download(
             self.albums_url, self.STRATEGY["async_albums"]
         )
+        logger.debug("загружено albums_json")
         photos_json: List[Photo] = await self.async_download(
             self.photos_url, self.STRATEGY["async_photos"]
         )
+        logger.debug("загружено photos_json")
+        queue = asyncio.Queue()
 
-        queue = asyncio.Queue(maxsize=100)
-        tasks = []
-        for i in photos_json:
-            task = asyncio.create_task(
-                self.async_download(i.url, self.STRATEGY["AsyncPhotoBinary"], queue)
-            )
-            tasks.append(task)
+        for photo in photos_json:
+            album = albums_json[photo.albumId]
+            task = PhotoTask(photo=photo, album=album)
+            await queue.put(task)
+
+        workers = []
+        for i in range(100):
+            worker = asyncio.create_task(self.worker(queue))
+            workers.append(worker)
 
         await queue.join()
 
-        result = await asyncio.gather(*tasks, return_exceptions=True)
+        # останавливаю воркеров
+        for worker in workers:
+            worker.cancel()
 
-        for photo, file in zip(photos_json, result):
-            album = albums_json[photo.albumId]
-            print(album, photo.title)
+        result = await asyncio.gather(*workers, return_exceptions=True)
+        logger.debug("загружены фотки")
+
+        for res in result:
+            if isinstance(res, Exception):
+                print(f"Unexpected exception: {result}")
+                raise Exception("Error")

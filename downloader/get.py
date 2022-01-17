@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 
-from typing import List
+from typing import AsyncIterator, List, Optional, Type
+from types import TracebackType
 
 import requests
 import aiohttp
+from contextlib import asynccontextmanager
 
 
 class BaseGet(ABC):
@@ -44,18 +46,53 @@ class Get(BaseGet):
 
 
 class AsyncGet(BaseGet):
+    """похоже это не совсем правильно, сессия создается для каждого запроса и закрывается"""
+
     def __init__(self) -> None:
         self._client = aiohttp.ClientSession(raise_for_status=True)
 
     async def close(self) -> None:
         return await self._client.close()
 
-    async def get(self, url: str) -> aiohttp.ClientResponse:
-        async with self._client.get(url) as resp:
-            return resp
+    async def __aenter__(self) -> "AsyncGet":
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        await self.close()
+        return None
 
     async def get_json(self, url: str) -> List[dict]:
-        return await (await self.get(url)).json()  # как бы избавиться от 2 await
+        async with self._client.get(url) as resp:
+            return await resp.json()
 
     async def get_bytes(self, url: str) -> bytes:
-        return await (await self.get(url)).read()
+        async with self._client.get(url) as resp:
+            return await resp.read()
+
+
+@asynccontextmanager
+async def client() -> AsyncIterator[AsyncGet]:
+    """асинхронный контекст
+
+        чтобы не было ошибки Asnycio - RuntimeError: Timeout context manager should be used inside a task Unclosed client session
+        и сессия закрывалась после каждого запроса
+
+
+        как бы вот этот контекст пробрасываю выше
+        async def main():
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://httpbin.org/get') as resp:
+                print(resp.status)
+                print(await resp.text())
+
+    asyncio.run(main())"""
+    client = AsyncGet()
+    try:
+        yield client
+    finally:
+        await client.close()

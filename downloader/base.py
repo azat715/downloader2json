@@ -35,5 +35,8 @@ class DownloadCenter:
     def download(self, url):
         return self.downloader.get_result(url)
 
-    async def async_download(self, url, queue):
-        return await self.downloader.get_result(url)
+    async def async_download(self, url, queue=None):
+        res = await self.downloader.get_result(url)
+        if queue:
+            queue.task_done()
+        return res
