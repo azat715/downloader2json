@@ -36,12 +36,8 @@ class Control:
     def download(self, url: str, worker: DownloadCenter):
         return worker.download(url)
 
-    async def async_download(self, url: str, worker: DownloadCenter, queue=None):
-        """в воркер передаю очередь"""
-        res = await worker.download(url)
-        if queue:
-            queue.task_done()  #  передаю сигнал завершения таски
-        return res
+    async def async_download(self, url: str, worker: DownloadCenter):
+        return await worker.download(url)
 
     def run(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
