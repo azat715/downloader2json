@@ -73,15 +73,16 @@ class Control:
 
     async def worker(self, queue):
         while True:
+            task: PhotoTask = await queue.get()
             try:
-                raise Exception("test error")
-                task: PhotoTask = await queue.get()
                 photo: Photo = task.photo
                 album: Album = task.album
 
                 file: bytes = await self.async_download(
                     photo.url, self.STRATEGY["async_photo_binary"]
                 )
+
+                # raise Exception("test error")
                 logger.debug(f"загружено {photo.url}")
                 album_path = self.folder / album.title
                 album_path.mkdir(exist_ok=True)
@@ -91,16 +92,10 @@ class Control:
                 async with async_open(path, "wb") as f:
                     await f.write(file)
                 logger.debug(f"Сохранено {path}")
-                queue.task_done()
-
-            except asyncio.CancelledError:
-                break
 
             except Exception as e:
-                raise e
-
-            finally:
-                queue.task_done()
+                logger.warning(f"произошла ошибка {e}")
+            queue.task_done()
 
     async def async_run(self):
         self.create_folder()
@@ -135,5 +130,5 @@ class Control:
 
         for res in result:
             if isinstance(res, Exception):
-                print(f"Unexpected exception: {result}")
-                raise Exception("Error")
+                logger.warning(f"Unexpected exception: {res}")
+                raise res
