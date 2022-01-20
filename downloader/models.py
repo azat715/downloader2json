@@ -1,4 +1,4 @@
-from typing import NamedTuple, Type
+from typing import NamedTuple
 from pydantic import BaseModel, Field, HttpUrl
 
 
