@@ -1,3 +1,21 @@
+
+Использование 
+NAME
+    downloader
+
+SYNOPSIS
+    downloader COMMAND
+
+COMMANDS
+    COMMAND is one of the following:
+
+     async_1
+       run multithreading download
+
+     async_2
+       run async download
+
+
 Реализовать парсер с сайта https://jsonplaceholder.typicode.com/ в несколько потоков или процессов, объекты albums/ и photos/.
 https://jsonplaceholder.typicode.com/albums/
 https://jsonplaceholder.typicode.com/photos/
