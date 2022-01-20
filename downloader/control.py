@@ -11,7 +11,7 @@ from .base import DownloadCenter
 from .async_1 import AlbumJson, PhotoJson, PhotoBinary
 from .async_2 import AsyncAlbumJson, AsyncPhotoJson, AsyncPhotoBinary
 from .models import Album, Photo, PhotoTask
-from .utils import logger_wraps
+from .utils import logger_wraps, async_logger_wraps
 
 
 class Control:
@@ -36,6 +36,7 @@ class Control:
     def download(self, url: str, worker: DownloadCenter):
         return worker.download(url)
 
+    @async_logger_wraps(logger)
     async def async_download(self, url: str, worker: DownloadCenter):
         return await worker.download(url)
 
@@ -86,7 +87,7 @@ class Control:
                 )
 
                 # raise Exception("test error")
-                logger.debug(f"загружено {photo.url}")
+                # logger.debug(f"загружено {photo.url}")
                 album_path = self.folder / album.title
                 album_path.mkdir(exist_ok=True)
 

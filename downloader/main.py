@@ -1,3 +1,4 @@
+import fire
 import asyncio
 from pathlib import Path
 
@@ -11,16 +12,17 @@ PHOTOS_URL = "https://jsonplaceholder.typicode.com/photos/"
 FOLDER = Path("albums")
 
 
-# def main():
-#     t = Timer.start()
-#     logger.info("Запуск async_1")
-#     downloader = Control(albums_url=ALBUM_URL, photos_url=PHOTOS_URL, folder=FOLDER)
-#     downloader.run()
-#     time_delta = t.stop()
-#     logger.info(f"Загрузка завершена за {time_delta}")
+def async_1():
+    """run multithreading download"""
+    t = Timer.start()
+    logger.info("Запуск async_1")
+    downloader = Control(albums_url=ALBUM_URL, photos_url=PHOTOS_URL, folder=FOLDER)
+    downloader.run()
+    time_delta = t.stop()
+    logger.info(f"Загрузка завершена за {time_delta}")
 
 
-async def main():
+async def async_2():
     t = Timer.start()
     logger.info("Запуск async_2")
     downloader = Control(albums_url=ALBUM_URL, photos_url=PHOTOS_URL, folder=FOLDER)
@@ -29,6 +31,12 @@ async def main():
     logger.info(f"Загрузка завершена за {time_delta}")
 
 
-# if __name__ == "__main__":=
-# main()
-asyncio.run(main())
+def run_async_2():
+    """run async download"""
+    asyncio.run(async_2())
+
+def main():
+    fire.Fire({
+        'async_1': async_1,
+        'async_2': run_async_2,
+    })

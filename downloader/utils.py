@@ -29,3 +29,20 @@ def logger_wraps(logger):
         return wrapped
 
     return wrapper
+
+
+def async_logger_wraps(logger):
+    def wrapper(func):
+        @functools.wraps(func)
+        async def wrapped(*args, **kwargs):
+            logger.opt(depth=1)
+            logger.debug(f"Загрузка url {args[1]} началась")
+            t = Timer.start()
+            result = func(*args, **kwargs)
+            time_delta = t.stop()
+            logger.debug(f"Загрузка url {args[1]} закончилась за {time_delta}")
+            return await result
+
+        return wrapped
+
+    return wrapper
