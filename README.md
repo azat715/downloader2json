@@ -1,19 +1,10 @@
 
-Использование 
-NAME
-    downloader
+```
+poetry run downloader -h - help
+poetry run downloader async_1  - run multithreading download
+poetry run downloader async_2  - run async download
 
-SYNOPSIS
-    downloader COMMAND
-
-COMMANDS
-    COMMAND is one of the following:
-
-     async_1
-       run multithreading download
-
-     async_2
-       run async download
+```
 
 
 Реализовать парсер с сайта https://jsonplaceholder.typicode.com/ в несколько потоков или процессов, объекты albums/ и photos/.
