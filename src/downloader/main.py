@@ -19,11 +19,11 @@ FOLDER = Path("albums")
 PHOTO_EXT = ".png"
 WORKERS = 100
 
-async def fetch_json(session: ClientSession, url: str):
+async def fetch_json(url: str, session: ClientSession):
     async with session.get(url) as response:
         return await response.json()
 
-async def fetch_raw(session: ClientSession, url: str):
+async def fetch_raw(url: str, session: ClientSession):
     async with session.get(url) as response:
         return await response.read()
 
@@ -40,61 +40,52 @@ async def save_file(path: Path, raw: bytes):
     async with aiofiles.open(path, mode="wb") as f:
         await f.write(raw)
 
-async def get_albums(session: ClientSession):
-    data = await fetch_json(session, ALBUM_URL)
+async def get_albums(url: str, session: ClientSession):
+    data = await fetch_json(url, session)
     res = {}
-    i: Album
-    for i in parser(Album, data):
-        res[i.id_] = i
+    album: Album
+    for album in parser(Album, data):
+        res[album.id_] = album
     logger.debug("загружено albums_json")
     return res
 
-async def get_photos(session: ClientSession):
-    data = await fetch_json(session, PHOTOS_URL)
+async def get_photos(url: str, session: ClientSession):
+    data = await fetch_json(url, session)
     logger.debug("загружено photos_json")
     return parser(Photo, data)
 
 ### воркеры
 
-async def get_photo(session: ClientSession, photos: asyncio.Queue, res: asyncio.Queue):
+async def get_photo(session: ClientSession, tasks: asyncio.Queue, res: asyncio.Queue):
     while True:
-        photo: PhotoTask = await photos.get()
-        data = await fetch_raw(session, photo.url)
+        photo: PhotoTask = await tasks.get()
+        data = await fetch_raw(photo.url, session)
         photo = photo._replace(raw=data)
         await res.put(photo)
         logger.debug(f"загружено {photo.url}")
-        photos.task_done()
+        tasks.task_done()
 
-async def save_photo(photos: asyncio.Queue):
+async def save_photo(tasks: asyncio.Queue):
     while True:
-        photo: PhotoTask = await photos.get()
+        photo: PhotoTask = await tasks.get()
         album_path = FOLDER / photo.album_title
         await create_folder(album_path)
         file_name = album_path.joinpath(photo.title).with_suffix(PHOTO_EXT)
         await save_file(file_name, photo.raw)
         logger.debug(f"записано {file_name}")
-        photos.task_done()
+        tasks.task_done()
 
 ###
 ### запуск воркеров
 
-async def load_photos(albums, photos, session, get_photo_queue, save_photo_queue):
-    photo: Photo
-    for photo in photos:
-        problem = PhotoTask(
-            url=photo.url,
-            album_title=albums[photo.albumId].title,
-            title=photo.title
-        )
-        await get_photo_queue.put(problem)
-
+async def load_photos(session: ClientSession, get_photo_queue: asyncio.Queue, save_photo_queue: asyncio.Queue):
     tasks_get_photo = []
     for _ in range(WORKERS):
         task = asyncio.create_task(get_photo(session, get_photo_queue, save_photo_queue))
         tasks_get_photo.append(task)
     return tasks_get_photo
 
-async def save_photos(save_photo_queue):
+async def save_photos(save_photo_queue: asyncio.Queue):
     tasks_save_photo = []
     for _ in range(WORKERS):
         task = asyncio.create_task(save_photo(save_photo_queue))
@@ -112,18 +103,27 @@ async def run():
     save_photo_queue = asyncio.Queue()
 
     async with aiohttp.ClientSession() as session:
-        albums = await get_albums(session)
-        photos = await get_photos(session)
+        albums = await get_albums(ALBUM_URL, session)
+        photos = await get_photos(PHOTOS_URL, session)
+
+        photo: Photo
+        for photo in photos:
+            await get_photo_queue.put(PhotoTask(
+                url=photo.url,
+                album_title=albums[photo.albumId].title,
+                title=photo.title
+            ))
+
         task1 = asyncio.create_task(
-            load_photos(albums, photos, session, get_photo_queue, save_photo_queue)
+            load_photos(session, get_photo_queue, save_photo_queue)
         )
-    task2 = asyncio.create_task(save_photos(save_photo_queue))
+        task2 = asyncio.create_task(save_photos(save_photo_queue))
 
-    tasks_get_photo = await task1
-    tasks_save_photo = await task2
+        tasks_get_photo = await task1
+        tasks_save_photo = await task2
 
-    await get_photo_queue.join()
-    await save_photo_queue.join()
+        await get_photo_queue.join()
+        await save_photo_queue.join()
 
     for task in chain(tasks_get_photo, tasks_save_photo):
         task.cancel()
@@ -133,4 +133,3 @@ async def run():
 
 def main():
     fire.Fire(asyncio.run(run()))
-
