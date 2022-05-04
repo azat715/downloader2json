@@ -5,6 +5,7 @@ RUN apk update
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV LOGURU_LEVEL INFO
 RUN mkdir /code
 WORKDIR /code
 COPY dist/downloader-0.2.0.tar.gz /code/
