@@ -43,7 +43,6 @@ async def test_get_albums():
         res = await get_albums("http:/test.com", session)
         assert res[1].dict(by_alias=True) == data
 
-
 @pytest.mark.asyncio
 async def test_get_photos():
     data = {
@@ -57,4 +56,3 @@ async def test_get_photos():
     async with aiohttp.ClientSession() as session:
         res = await get_photos("http:/test.com", session)
         assert res[0].dict(by_alias=True) == data
-
