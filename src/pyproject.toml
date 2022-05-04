@@ -1,26 +1,25 @@
 [tool.poetry]
 name = "downloader"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Rinat Shaihetdinov <rinat.shaihetdinov@simbirsoft.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "3.9"
-requests = "^2.27.0"
+python = "3.9.7"
 loguru = "^0.5.3"
 pydantic = "^1.9.0"
-types-requests = "^2.27.1"
 fire = "^0.4.0"
 aiohttp = "^3.8.1"
-aiofile = "^3.7.4"
+aiofiles = "^0.8.0"
+pytest-asyncio = "^0.18.3"
+anyio = "^3.5.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"
 pylint = "^2.12.2"
 pytest = "^6.2.5"
 isort = "^5.10.1"
-ipython = "^7.30.1"
 mypy = "^0.930"
 
 [build-system]

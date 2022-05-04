@@ -1,5 +1,5 @@
-from typing import NamedTuple
 from pydantic import BaseModel, Field, HttpUrl
+from typing import NamedTuple
 
 
 class Album(BaseModel):
@@ -39,5 +39,7 @@ class Photo(BaseModel):
 
 
 class PhotoTask(NamedTuple):
-    photo: Photo
-    album: Album
+    url: str
+    album_title: str
+    title: str
+    raw: bytes = None
