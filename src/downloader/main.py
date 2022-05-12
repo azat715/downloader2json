@@ -42,12 +42,12 @@ async def save_file(path: Path, raw: bytes):
 
 async def get_albums(url: str, session: ClientSession):
     data = await fetch_json(url, session)
-    res = {}
+    albums = {}
     album: Album
     for album in parser(Album, data):
-        res[album.id_] = album
+        albums[album.id_] = album
     logger.debug("загружено albums_json")
-    return res
+    return albums
 
 async def get_photos(url: str, session: ClientSession):
     data = await fetch_json(url, session)
@@ -94,7 +94,7 @@ async def save_photos(save_photo_queue: asyncio.Queue):
 
 ###
 
-async def run():
+async def download():
     logger.info("Запуск")
     await create_folder(FOLDER)
 
@@ -131,5 +131,8 @@ async def run():
     await asyncio.gather(*tasks_get_photo, return_exceptions=True)
     logger.info("Загружено")
 
+def run():
+    asyncio.run(download())
+
 def main():
-    fire.Fire(asyncio.run(run()))
+    fire.Fire(run)

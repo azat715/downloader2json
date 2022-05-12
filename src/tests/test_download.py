@@ -18,18 +18,18 @@ async def test_get_file():
         res = await fetch_raw("http:/test.com", session)
         assert res == CONTENT
 
-def create_mock(data: dict):
-    mock = aiohttp.ClientSession
-    mock.get = MagicMock()
-    mock.get.return_value.__aenter__.return_value.status = 200
-    mock.get.return_value.__aenter__.return_value.json.return_value = [data]
-
 @pytest.mark.asyncio
 async def test_create_file(tmp_path):
     path = tmp_path / "test.bin"
     await save_file(path, CONTENT)
     data = path.read_bytes()
     assert data.decode("utf-8") == "тест"
+
+def create_mock(data: dict):
+    mock = aiohttp.ClientSession
+    mock.get = MagicMock()
+    mock.get.return_value.__aenter__.return_value.status = 200
+    mock.get.return_value.__aenter__.return_value.json.return_value = [data]
 
 @pytest.mark.asyncio
 async def test_get_albums():
