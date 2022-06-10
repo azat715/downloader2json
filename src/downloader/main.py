@@ -225,7 +225,3 @@ async def download(folder: str):  # pylint: disable=missing-function-docstring
     await asyncio.gather(*tasks_get_photo, return_exceptions=True)
     await asyncio.gather(*tasks_get_photo, return_exceptions=True)
     logger.info("Загружено")
-
-
-def main():  # pylint: disable=missing-function-docstring
-    asyncio.run(download())

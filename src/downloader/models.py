@@ -1,7 +1,7 @@
 """Models for parsing json
 """
-from typing import NamedTuple, Optional
 from pathlib import Path
+from typing import NamedTuple, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
