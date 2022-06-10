@@ -23,7 +23,7 @@ jobs:
         pip install -r src/requirements.txt
     - name: Analysing the code with pylint
       run: |
-        pylint src
+        pylint --exit-zero src
     - name: Test with pytest
       run: |
         pytest src/tests
