@@ -1,5 +1,9 @@
+"""Models for parsing json
+"""
+from typing import NamedTuple, Optional
+from pathlib import Path
+
 from pydantic import BaseModel, Field, HttpUrl
-from typing import NamedTuple
 
 
 class Album(BaseModel):
@@ -12,7 +16,6 @@ class Album(BaseModel):
             "title": "quidem molestiae enim"
         }
     """
-
     userId: int
     id_: int = Field(alias="id")
     title: str
@@ -30,7 +33,6 @@ class Photo(BaseModel):
             "thumbnailUrl": "https://via.placeholder.com/150/92c952"
         }
     """
-
     albumId: int
     id_: int = Field(alias="id")
     title: str
@@ -39,7 +41,9 @@ class Photo(BaseModel):
 
 
 class PhotoTask(NamedTuple):
+    """PhotoTask DTO"""
     url: str
     album_title: str
     title: str
-    raw: bytes = None
+    path: Path
+    raw: Optional[bytes] = None

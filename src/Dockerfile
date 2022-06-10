@@ -6,9 +6,11 @@ RUN apk update
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV LOGURU_LEVEL INFO
+ENV PYTHONPATH="/code/downloader:$PYTHONPATH"
 RUN mkdir /code
 WORKDIR /code
-COPY dist/downloader-0.2.0.tar.gz /code/
+COPY requirements.txt /code/
 RUN --mount=type=cache,target=/root/.cache \
-    python3 -m pip install -U downloader-0.2.0.tar.gz --no-cache-dir
-ENTRYPOINT ["downloader"] 
+    python3 -m pip install -r requirements.txt --no-cache-dir
+COPY . /code/
+CMD ["python3", "-m", "downloader"]

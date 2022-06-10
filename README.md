@@ -1,17 +1,22 @@
+# downloader2json
+
+## Общий функционал
+
+Загрузка фотографий с сайта https://jsonplaceholder.typicode.com
+
+## Запуск
 
 ```
 запуск в докере
-docker build -t downloader2json src/
-docker run -v {folder save albums}:/code downloader2json 
-
-
-poetry run downloader -h - help
-poetry run downloader
-
+docker-compose up
 ```
 
+## Основные технологии
 
-Реализовать парсер с сайта https://jsonplaceholder.typicode.com/ в несколько потоков или процессов, объекты albums/ и photos/.
-https://jsonplaceholder.typicode.com/albums/
-https://jsonplaceholder.typicode.com/photos/
-Скачиваем все альбомы и фотографии, кладем их по папкам /альбом/название_фотографии
+Использован паттерн Worker pool (asyncio.Queue)
+
+## Структура приложения
+
+src/downloader/main.py - основная логика скрипта 
+
+src/downloader/models.py - pydantic модели для парсинга json

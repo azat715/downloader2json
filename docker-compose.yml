@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  downloader2json:
+    build: ./src
+    environment:
+      - FOLDER=/data
+
+    volumes:
+      - downloaded_data:/data
+
+volumes:
+  downloaded_data: null
